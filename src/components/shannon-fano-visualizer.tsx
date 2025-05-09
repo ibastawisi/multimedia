@@ -58,40 +58,12 @@ export default function ShannonFanoVisualizer() {
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <Textarea
-                  placeholder="Enter text to compress..."
-                  value={input}
-                  onChange={handleInputChange}
-                  className="min-h-[100px]"
-                />
-              </div>
-              <div className="w-full md:w-64">
-                <Select
-                  onValueChange={handleExampleSelect}
-                  value={
-                    input && EXAMPLES[input as keyof typeof EXAMPLES]
-                      ? input
-                      : ""
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select an example" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {Object.keys(EXAMPLES).map((key) => (
-                      <SelectItem
-                        key={key}
-                        value={EXAMPLES[key as keyof typeof EXAMPLES]}
-                      >
-                        {key}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+            <Textarea
+              placeholder="Enter text to compress..."
+              value={input}
+              onChange={handleInputChange}
+              className="min-h-[100px]"
+            />
 
             {error && (
               <Alert variant="destructive">
@@ -137,7 +109,27 @@ export default function ShannonFanoVisualizer() {
               <Button onClick={resetVisualizer} variant="outline">
                 <RotateCcw className="mr-2 h-4 w-4" />
                 Reset
-              </Button>
+              </Button>{" "}
+              <Select
+                onValueChange={handleExampleSelect}
+                value={
+                  input && EXAMPLES[input as keyof typeof EXAMPLES] ? input : ""
+                }
+              >
+                <SelectTrigger className="ml-auto">
+                  <SelectValue placeholder="Select an example" />
+                </SelectTrigger>
+                <SelectContent>
+                  {Object.keys(EXAMPLES).map((key) => (
+                    <SelectItem
+                      key={key}
+                      value={EXAMPLES[key as keyof typeof EXAMPLES]}
+                    >
+                      {key}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
         </CardContent>
