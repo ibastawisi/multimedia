@@ -67,7 +67,8 @@ export const generatePartitionHistory = (
 ): PartitionHistory => {
   const history: PartitionHistory = [];
 
-  const initialState: PartitionState = {
+  // Initialize the root state
+  history.push({
     chars: [...chars],
     freqs: chars.map((char) => freqs[char]),
     totalFreq: chars.reduce((sum, char) => sum + freqs[char], 0),
@@ -78,27 +79,30 @@ export const generatePartitionHistory = (
     splitIndex: null,
     leftSum: null,
     rightSum: null,
-  };
+  });
 
-  const partition = (state: PartitionState) => {
-    history.push({ ...state });
+  // Recursive function to partition and build history
+  const partition = (stateIndex: number) => {
+    const state = history[stateIndex];
 
+    // Base case: single character
     if (state.chars.length <= 1) {
       return;
     }
 
+    // Find the best split point
     let bestSplitIndex = 0;
     let minDifference = Number.POSITIVE_INFINITY;
-    let leftSumCumulative = 0;
+    let leftSum = 0;
     const totalSum = state.chars.reduce(
       (sum: number, char: string) => sum + freqs[char],
       0
     );
 
     for (let i = 0; i < state.chars.length - 1; i++) {
-      leftSumCumulative += freqs[state.chars[i]];
-      const rightSumCumulative = totalSum - leftSumCumulative;
-      const difference = Math.abs(leftSumCumulative - rightSumCumulative);
+      leftSum += freqs[state.chars[i]];
+      const rightSum = totalSum - leftSum;
+      const difference = Math.abs(leftSum - rightSum);
 
       if (difference < minDifference) {
         minDifference = difference;
@@ -106,72 +110,67 @@ export const generatePartitionHistory = (
       }
     }
 
-    const updatedState = { ...state };
-    updatedState.splitIndex = bestSplitIndex;
-    updatedState.leftSum = state.chars
+    // Update the state with split information
+    state.splitIndex = bestSplitIndex;
+    state.leftSum = state.chars
       .slice(0, bestSplitIndex + 1)
       .reduce((sum: number, char: string) => sum + freqs[char], 0);
-    updatedState.rightSum = state.chars
+    state.rightSum = state.chars
       .slice(bestSplitIndex + 1)
       .reduce((sum: number, char: string) => sum + freqs[char], 0);
 
+    // Create left and right partitions
     const leftChars = state.chars.slice(0, bestSplitIndex + 1);
     const rightChars = state.chars.slice(bestSplitIndex + 1);
 
-    const leftState: PartitionState = {
+    const leftState = {
       chars: leftChars,
       freqs: leftChars.map((char) => freqs[char]),
       totalFreq: leftChars.reduce((sum, char) => sum + freqs[char], 0),
       depth: state.depth + 1,
       prefix: state.prefix + "0",
-      parent: history.length - 1,
+      parent: stateIndex,
       children: [],
       splitIndex: null,
       leftSum: null,
       rightSum: null,
     };
 
-    const rightState: PartitionState = {
+    const rightState = {
       chars: rightChars,
       freqs: rightChars.map((char) => freqs[char]),
       totalFreq: rightChars.reduce((sum, char) => sum + freqs[char], 0),
       depth: state.depth + 1,
       prefix: state.prefix + "1",
-      parent: history.length - 1,
+      parent: stateIndex,
       children: [],
       splitIndex: null,
       leftSum: null,
       rightSum: null,
     };
 
-    // A more robust way to calculate child indices, considering if they will be pushed to history
-    let currentHistoryIndex = history.length;
-    const leftChildHistoryIndex =
-      leftChars.length > 0 ? currentHistoryIndex : null;
-    if (leftChars.length > 1) currentHistoryIndex++;
-    else if (leftChars.length === 1) currentHistoryIndex++;
+    // Add children to history
+    const leftIndex = history.length;
+    history.push(leftState);
 
-    const rightChildHistoryIndex =
-      rightChars.length > 0 ? currentHistoryIndex : null;
+    const rightIndex = history.length;
+    history.push(rightState);
 
-    updatedState.children = [leftChildHistoryIndex, rightChildHistoryIndex];
+    // Update parent's children
+    state.children = [leftIndex, rightIndex];
 
-    history[history.length - 1] = updatedState;
-
+    // Recursively partition the left group first (depth-first)
     if (leftChars.length > 1) {
-      partition(leftState);
-    } else if (leftChars.length === 1) {
-      history.push(leftState);
+      partition(leftIndex);
     }
 
+    // Then recursively partition the right group
     if (rightChars.length > 1) {
-      partition(rightState);
-    } else if (rightChars.length === 1) {
-      history.push(rightState);
+      partition(rightIndex);
     }
   };
 
-  partition(initialState);
+  partition(0);
   return history;
 };
 
